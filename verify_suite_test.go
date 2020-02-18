@@ -1,4 +1,4 @@
-package main_test
+package verifyslack_test
 
 import (
 	"testing"
