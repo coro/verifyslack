@@ -43,3 +43,7 @@ Content-Length: 51
 
 request is not signed with a valid Slack signature
 ```
+
+# More info
+
+This repo is based on the [instructions published by Slack](https://api.slack.com/authentication/verifying-requests-from-slack) for verifying requests.
