@@ -1,6 +1,7 @@
 package verifyslack_test
 
 import (
+	"crypto/hmac"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +13,22 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
+
+var _ = Describe("GenerateExpectedSignature", func() {
+	When("the function is passed metadata about the Slack request", func() {
+		It("returns an expected value for the X-Slack-Signature header", func() {
+			timestamp := "1582110731"
+			requestBody := []byte("token=abbcbdbebdabddb&team_id=V1C2D3T4GH&team_domain=robbit&channel_id=RIF756S&channel_name=slack")
+			signingSecret := "supersneakysecrets"
+
+			// This was generated using:
+			// https://github.com/slackapi/python-slack-events-api/blob/01a3d1b55ad3515c854b090599a5260ceb779344/slackeventsapi/server.py#L47
+			expectedSignature := "v0=c98133278144dd816a12e9ae48fc056609fa6879eaf20a43ad3ea9f372aebf0d"
+
+			Expect(hmac.Equal([]byte(expectedSignature), []byte(verifyslack.GenerateExpectedSignature(timestamp, requestBody, signingSecret)))).To(BeTrue())
+		})
+	})
+})
 
 var _ = Describe("RequestHandler", func() {
 	When("the middleware handler receives a request", func() {

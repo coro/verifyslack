@@ -1,6 +1,10 @@
 package verifyslack
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -29,4 +33,13 @@ func RequestHandler(handler http.HandlerFunc, timeNow time.Time) http.HandlerFun
 
 		handler(w, r)
 	}
+}
+
+func GenerateExpectedSignature(timestamp string, requestBody []byte, signingSecret string) string {
+	baseSignature := append([]byte(fmt.Sprintf("v0:%s:", timestamp)), requestBody...)
+	mac := hmac.New(sha256.New, []byte(signingSecret))
+	mac.Write(baseSignature)
+
+	expectedSignature := fmt.Sprintf("v0=%s", hex.EncodeToString(mac.Sum(nil)))
+	return expectedSignature
 }
