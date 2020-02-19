@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -12,7 +13,7 @@ import (
 
 const MaxPermittedRequestAge time.Duration = 100 * time.Second
 
-func RequestHandler(handler http.HandlerFunc, timeNow time.Time) http.HandlerFunc {
+func RequestHandler(handler http.HandlerFunc, timeNow time.Time, signingSecret string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var timestamp string
 		if timestamp = r.Header.Get("X-Slack-Request-Timestamp"); timestamp == "" {
@@ -27,7 +28,26 @@ func RequestHandler(handler http.HandlerFunc, timeNow time.Time) http.HandlerFun
 		}
 
 		if timeNow.After(time.Unix(intTimestamp, 0).Add(MaxPermittedRequestAge)) {
-			http.Error(w, "request did not contain a request timestamp", http.StatusBadRequest)
+			http.Error(w, "request is too old to be handled", http.StatusBadRequest)
+			return
+		}
+
+		var slackSignature string
+		if slackSignature = r.Header.Get("X-Slack-Signature"); slackSignature == "" {
+			http.Error(w, "request does not provide a Slack-signed signature", http.StatusUnauthorized)
+			return
+		}
+
+		requestBody, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "failed to read body", http.StatusInternalServerError)
+			return
+		}
+
+		expectedSignature := GenerateExpectedSignature(timestamp, requestBody, signingSecret)
+
+		if !hmac.Equal([]byte(expectedSignature), []byte(slackSignature)) {
+			http.Error(w, "request is not signed with a valid Slack signature", http.StatusUnauthorized)
 			return
 		}
 
