@@ -1,6 +1,7 @@
 package verifyslack
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -48,6 +49,9 @@ func RequestHandler(handler http.HandlerFunc, timeGetter timeGetter, signingSecr
 			http.Error(w, "failed to read body", http.StatusInternalServerError)
 			return
 		}
+
+		// Restore the request body so the wrapped HTTP handler can read it again
+		r.Body = ioutil.NopCloser(bytes.NewBuffer(requestBody))
 
 		expectedSignature := GenerateExpectedSignature(timestamp, requestBody, signingSecret)
 

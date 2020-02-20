@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -34,7 +35,7 @@ var _ = Describe("GenerateExpectedSignature", func() {
 var _ = Describe("RequestHandler", func() {
 	When("the middleware handler receives a request", func() {
 		var req *http.Request
-		var requestBody []byte
+		var requestBody []byte = []byte("token=abbcbdbebdabddb&team_id=V1C2D3T4GH&team_domain=robbit&channel_id=RIF756S&channel_name=slack")
 		var err error
 		var rr *httptest.ResponseRecorder
 		var middlewareHandler http.HandlerFunc
@@ -53,9 +54,12 @@ var _ = Describe("RequestHandler", func() {
 		JustBeforeEach(func() {
 			validationTimeGetter := validationTimeGetter{validationTime: validationTime}
 			// We want to test the case where the handler is acting as middleware to another handler.
-			// If the whole handler stack returns 200 OK with a body of 'OK', we know the middleware
+			// If the whole handler stack returns 200 OK with the same body as the request, we know the middleware
 			// handler has verified the request and accepted the connection.
-			return200OKHandler = http.HandlerFunc(func(rr http.ResponseWriter, req *http.Request) { fmt.Fprintf(rr, "OK") })
+			return200OKHandler = http.HandlerFunc(func(rr http.ResponseWriter, req *http.Request) {
+				reqBody, _ := ioutil.ReadAll(req.Body)
+				fmt.Fprintf(rr, string(reqBody))
+			})
 			middlewareHandler = http.HandlerFunc(verifyslack.RequestHandler(return200OKHandler, validationTimeGetter, signingSecret))
 		})
 
@@ -118,7 +122,7 @@ var _ = Describe("RequestHandler", func() {
 					It("accepts the request", func() {
 						middlewareHandler.ServeHTTP(rr, req)
 						Expect(rr.Code).To(Equal(http.StatusOK))
-						Expect(rr.Body.String()).To(Equal("OK"))
+						Expect(rr.Body.String()).To(Equal(string(requestBody)))
 					})
 				})
 			})
