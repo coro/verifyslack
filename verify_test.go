@@ -51,11 +51,12 @@ var _ = Describe("RequestHandler", func() {
 		})
 
 		JustBeforeEach(func() {
+			validationTimeGetter := validationTimeGetter{validationTime: validationTime}
 			// We want to test the case where the handler is acting as middleware to another handler.
 			// If the whole handler stack returns 200 OK with a body of 'OK', we know the middleware
 			// handler has verified the request and accepted the connection.
 			return200OKHandler = http.HandlerFunc(func(rr http.ResponseWriter, req *http.Request) { fmt.Fprintf(rr, "OK") })
-			middlewareHandler = http.HandlerFunc(verifyslack.RequestHandler(return200OKHandler, validationTime, signingSecret))
+			middlewareHandler = http.HandlerFunc(verifyslack.RequestHandler(return200OKHandler, validationTimeGetter, signingSecret))
 		})
 
 		When("the request has no timestamp header", func() {

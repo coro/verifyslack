@@ -13,7 +13,11 @@ import (
 
 const MaxPermittedRequestAge time.Duration = 100 * time.Second
 
-func RequestHandler(handler http.HandlerFunc, timeNow time.Time, signingSecret string) http.HandlerFunc {
+type timeGetter interface {
+	Now() time.Time
+}
+
+func RequestHandler(handler http.HandlerFunc, timeGetter timeGetter, signingSecret string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var timestamp string
 		if timestamp = r.Header.Get("X-Slack-Request-Timestamp"); timestamp == "" {
@@ -27,6 +31,7 @@ func RequestHandler(handler http.HandlerFunc, timeNow time.Time, signingSecret s
 			return
 		}
 
+		timeNow := timeGetter.Now()
 		if timeNow.After(time.Unix(intTimestamp, 0).Add(MaxPermittedRequestAge)) {
 			http.Error(w, "request is too old to be handled", http.StatusBadRequest)
 			return
