@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/miekg/dns"
 )
 
 const MaxPermittedRequestAge time.Duration = 100 * time.Second
@@ -19,6 +21,7 @@ type timeGetter interface {
 }
 
 func RequestHandler(handler http.HandlerFunc, timeGetter timeGetter, signingSecret string) http.HandlerFunc {
+	const foo uint16 = dns.TypeNone
 	return func(w http.ResponseWriter, r *http.Request) {
 		var timestamp string
 		if timestamp = r.Header.Get("X-Slack-Request-Timestamp"); timestamp == "" {

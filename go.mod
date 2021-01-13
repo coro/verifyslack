@@ -6,6 +6,7 @@ require (
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/kr/text v0.2.0 // indirect
+	github.com/miekg/dns v1.0.0
 	github.com/nxadm/tail v1.4.6 // indirect
 	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.4
